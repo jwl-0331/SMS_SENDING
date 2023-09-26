@@ -153,7 +153,7 @@ public class messageSend {
 		bodyJson.put("content", content); //메시지 내용
 		bodyJson.put("messages", toArr);
 		
-String body = bodyJson.toJSONString();
+		String body = bodyJson.toJSONString();
 		
 		System.out.println(body);
 		
