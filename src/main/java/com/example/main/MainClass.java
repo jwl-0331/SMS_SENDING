@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.example.send.messageSend;
 
@@ -41,18 +43,50 @@ public class MainClass extends Thread{
 			//client가 보낸것을 thread 읽어 byte 배열에 넣고  읽을게 없으면 대기
 			while((count = fromClient.read(buf))!= -1) {
 				final String messageFromClient =new String(buf,0,count);
-				
 				System.out.println(messageFromClient);
-				String num = messageFromClient.substring(0,13);
-				System.out.println(num);
-				String[] numArray = num.split("-");
-				String toPhone = "";
-				for(int i = 0 ; i < 3; i++){
-					toPhone += numArray[i];
+				if(count <= 80) {
+					if(messageFromClient.contains(":") && (messageFromClient.indexOf(":") == 13)) {
+						String[] msg = messageFromClient.split(":");
+						String num = msg[0];
+						if(telValidator(num)) {
+							String[] numArray = num.split("-");
+							String toPhone = "";
+							for(int i = 0 ; i < 3; i++){
+								toPhone += numArray[i];
+							}
+							String content = messageFromClient.substring(14);
+							System.out.println(toPhone);
+							System.out.println(content);
+							System.out.println("SMS SEND");
+							messageSend message = new messageSend("SMS");
+							//message.sendSMS(toPhone, content);
+						}else {
+							System.out.println("전화 번호를 확인해주세요");
+						}
+					}else {
+						System.out.println("JSON 형태가 아닙니다.");
+					}
+				}else {
+					if(messageFromClient.contains(":")) {
+						String[] msg = messageFromClient.split(":");
+						String subject = msg[0];
+						String num = msg[1];
+						String content = msg[2];
+						if(telValidator(num)) {
+							String[] numArray = num.split("-");
+							String toPhone = "";
+							for(int i = 0 ; i < 3; i++){
+								toPhone += numArray[i];
+							}
+							System.out.println(subject);
+							System.out.println("LMS 전송");
+							messageSend message = new messageSend("LMS", subject);
+							message.sendLMS(subject,toPhone, content);
+						}else {
+							System.out.println("전화 번호를 확인해주세요");
+						}
+					}
 				}
-				String content = messageFromClient.substring(14);
-				messageSend message = new messageSend();
-				message.send(toPhone, content);
 			}
 		}catch(IOException e) {
 			e.printStackTrace();
@@ -68,6 +102,18 @@ public class MainClass extends Thread{
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	public boolean telValidator(String number) {
+		 Pattern pattern = Pattern.compile("\\d{3}-\\d{4}-\\d{4}");
+		 Matcher matcher = pattern.matcher(number);
+		 if (matcher.matches()) {
+            System.out.println("Valid phone number: " + number);
+            return true;
+		 } else {
+            System.out.println("Invalid. Not the form XXX-XXXX-XXX: " + number);
+            return false;
+		 }
 	}
 	
 	
